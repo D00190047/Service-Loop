@@ -13,6 +13,7 @@ xmlns:cdv="http://cordova.apache.org/ns/1.0"
   <preference name="phonegap-version" value="cli-8.1.1" />
   <preference name="orientation" value="portrait" />
 
+  <plugin name="cordova-plugin-camera" spec="*" />
   <plugin name="cordova-plugin-inappbrowser" />
   <plugin name="cordova-plugin-dialogs" spec="2.0.1" />
   <plugin name="cordova-plugin-splashscreen" spec="5.0.3" />
@@ -20,10 +21,13 @@ xmlns:cdv="http://cordova.apache.org/ns/1.0"
   <plugin name="cordova-plugin-secure-key-store" spec="*" />
   <plugin name="cordova-plugin-velda-devicefeedback" spec="*" /> 
   <plugin name="cordova-plugin-android-fingerprint-auth" spec="*" />
+  <plugin name="cordova-plugin-qr-barcode-scanner" spec="*" />
+  <plugin name="onesignal-cordova-plugin" spec="*" />
+  
   <platform name="android">
-    <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+   <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
       <application android:usesCleartextTraffic="true" />
-  </edit-config>
+	</edit-config>
     <preference name="SplashMaintainAspectRatio" value="true" />
     <preference name="SplashShowOnlyFirstTime" value="true" />
 	

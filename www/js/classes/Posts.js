@@ -1,6 +1,7 @@
 class Posts extends User {
-    constructor(posts, name, email, status, modules, socket) {
-        super(name, email, status, modules, socket);
+    constructor(id, posts, name, email, status, modules, avatar, open_tutorials, pending_tutorials, ongoing_tutorials, done_tutorials, tutored_pending_tutorials, tutored_ongoing_tutorials, tutored_done_tutorials, socket) {
+        super(id, name, email, status, modules, avatar, open_tutorials, pending_tutorials, ongoing_tutorials, done_tutorials, tutored_pending_tutorials, tutored_ongoing_tutorials, tutored_done_tutorials, 0, socket);
+
 
         this.all_posts = posts.response;
 
@@ -44,10 +45,10 @@ class Posts extends User {
             el.classList.add('ion-activatable', 'ripple', "not_read");
 
             el.innerHTML = `
-                <ion-card class="test post" post_id="${posts[i + originalLength]._id}" post_modules="${posts[i + originalLength].post_modules.join(', ')}">
+                <ion-card onclick="device_feedback();" class="test post" post_id="${posts[i + originalLength]._id}" post_modules="${posts[i + originalLength].post_modules.join(', ')}">
                         <ion-item lines="full">
                             <ion-avatar slot="start">
-                                <img src="https://d00192082.alwaysdata.net/ServiceLoopServer/resources/images/base_user.png">
+                                <img src="${posts[i + originalLength].std_avatar}">
                             </ion-avatar>
                             <ion-label>
                                 <p style="font-size:1em; color: black;">${posts[i + originalLength].post_title}</p>
@@ -144,7 +145,7 @@ class Posts extends User {
                 <ion-card class="test post" post_id="${post._id}" post_modules="${post.post_modules.join(', ')}">
                         <ion-item lines="full">
                             <ion-avatar slot="start">
-                                <img src="https://d00192082.alwaysdata.net/ServiceLoopServer/resources/images/base_user.png">
+                                <img src="${post.std_avatar}">
                             </ion-avatar>
                             <ion-label>
                                 <p style="font-size:1em; color: black;">${post.post_title}</p>
@@ -265,6 +266,8 @@ class Posts extends User {
     }
 
     getNotificationPostDetailsById(id) {
+        console.log("Notification post>>");
+        console.log(this.notification_posts)
         for (let i = 0; i < this.notification_posts.length; i++) {
             if (this.notification_posts[i]._id == id) {
                 return this.notification_posts[i];
@@ -274,16 +277,15 @@ class Posts extends User {
 
     async getAllNotificationPosts() {
         //The list containing all the notifications
-        let notification_list = document.getElementById("list");
-        //The children of the notification list
-        let notification_list_children = notification_list.children;
+        let notification_list = user_notifications.getAllNotifications();
+        console.log("maryamrya")
+        console.log(notification_list)
         let post_ids = [];
 
-        console.log(notification_list.children[0].firstElementChild.attributes[3].value)
-        for (let i = 0; i < notification_list_children.length; i++) {
-            post_ids.push(notification_list.children[i].firstElementChild.attributes[3].value);
+        for (let i = 0; i < notification_list.length; i++) {
+            post_ids.push(notification_list[i].post_id);
         }
-
+console.log(post_ids)
         let notification_posts = await access_route({notification_posts_id: post_ids}, "get_notification_posts");
         return notification_posts.response;
     }

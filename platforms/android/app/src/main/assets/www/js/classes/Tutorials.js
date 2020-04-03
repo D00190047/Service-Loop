@@ -1,6 +1,9 @@
 class Tutorials extends User {
-    constructor(tutorials, name, email, status, modules, socket) {
-        super(name, email, status, modules, socket);
+    constructor(id, tutorials, name, email, status, modules, avatar, open_tutorials, pending_tutorials, ongoing_tutorials, done_tutorials, tutored_pending_tutorials, tutored_ongoing_tutorials, tutored_done_tutorials, socket) {
+        super(id, name, email, status, modules, avatar, open_tutorials, pending_tutorials, ongoing_tutorials, done_tutorials, tutored_pending_tutorials, tutored_ongoing_tutorials, tutored_done_tutorials, 0, socket);
+        console.log(tutorials.response)
+        console.log(tutorials)
+        console.log("debug")
 
         this.all_tutorials = tutorials.response;
 
@@ -89,14 +92,13 @@ class Tutorials extends User {
     set_total_tutorials(total_tutorials) {
         this.total_tutorials = total_tutorials;
     }
-    
+
     add_ongoing_post(post) {
-        insert_to_array_by_index(this.ongoing_tutorials, 0, post)  ;
+        insert_to_array_by_index(this.ongoing_tutorials, 0, post);
         this.total_ongoing_tutorials = this.ongoing_tutorials.length;
     }
 
     add_post_to_segment(segment, list, tutorial) {
-        alert("??")
         console.log(list)
         const el = document.createElement('ion-list');
         el.className = "ion-activatable ripple";
@@ -106,7 +108,7 @@ class Tutorials extends User {
                 <ion-card class="test post" post_id="${tutorial._id}" post_modules="${tutorial.post_modules.join(', ')}" post_status="${tutorial.post_status}">
                         <ion-item lines="full">
                             <ion-avatar slot="start">
-                                <img src="https://d00192082.alwaysdata.net/ServiceLoopServer/resources/images/base_user.png">
+                                <img src="${tutorial.std_avatar}">
                             </ion-avatar>
                             <ion-label>
                                 <p style="font-size:1em; color: black;">${tutorial.post_title}</p>
@@ -128,29 +130,59 @@ class Tutorials extends User {
             
         `;
 
-        list.parentNode.insertBefore(el, list.nextSibling);
 
         if (segment == "Open") {
-            if (this.total_open_tutorials > 0) {
+            //if (this.total_open_tutorials > 0) {
+            this.total_open_tutorials++;
+            this.open_tutorials.push(tutorial);
+
+            if (typeof document.getElementById('open_tutorials_header') !== 'undefined' && document.getElementById('open_tutorials_header') !== null) {
                 document.getElementById('open_tutorials_header').innerText = "OPEN TUTORIALS";
                 document.getElementById('open_badge').innerText = this.total_open_tutorials;
             }
+            //}
         } else if (segment == "Pending") {
-            if (this.total_pending_tutorials > 0) {
+            //if (this.total_pending_tutorials > 0) {
+            this.total_pending_tutorials++;
+            this.pending_tutorials.push(tutorial);
+
+            if (typeof document.getElementById('pending_tutorials_header') !== 'undefined' && document.getElementById('pending_tutorials_header') !== null) {
                 document.getElementById('pending_tutorials_header').innerText = "PENDING TUTORIALS";
                 document.getElementById('pending_badge').innerText = this.total_pending_tutorials;
             }
+            
+            if(document.getElementById('pending') !== null && active_segment === "Pending" && this.pending_tutorials_length !== 3) {
+                list.after(el, list.previousSibling);
+            }
+            //}
         } else if (segment == "Ongoing") {
-            alert("test")
-            if (this.total_ongoing_tutorials > 0) {
+            //if (this.total_ongoing_tutorials > 0) {
+            this.total_ongoing_tutorials++;
+            this.ongoing_tutorials.push(tutorial);
+
+            if (typeof document.getElementById('ongoing_tutorials_header') !== 'undefined' && document.getElementById('ongoing_tutorials_header') !== null) {
                 document.getElementById('ongoing_tutorials_header').innerText = "ONGOING TUTORIALS";
                 document.getElementById('ongoing_badge').innerText = this.total_ongoing_tutorials;
             }
+            
+            if(document.getElementById('ongoing') !== null && active_segment === "Ongoing" && this.ongoing_tutorials_length !== 3) {
+                list.after(el, list.previousSibling);
+            }
+            //}
         } else {
-            if (this.total_done_tutorials > 0) {
+            //if (this.total_done_tutorials > 0) {
+            this.total_done_tutorials++;
+            this.done_tutorials.push(tutorial);
+
+            if (typeof document.getElementById('done_tutorials_header') !== 'undefined' && document.getElementById('done_tutorials_header') !== null) {
                 document.getElementById('done_tutorials_header').innerText = "DONE TUTORIALS";
                 document.getElementById('done_badge').innerText = this.total_done_tutorials;
             }
+            
+            if(document.getElementById('done') !== null && active_segment === "Done" && this.done_tutorials_length !== 3) {
+                list.after(el, list.previousSibling);
+            }
+            //}
         }
     }
 
@@ -178,12 +210,12 @@ class Tutorials extends User {
 //            }
 
             el.classList.add('ion-activatable', 'ripple', "not_read");
-
+            el.setAttribute('onClick', 'device_feedback()');
             el.innerHTML = `
                 <ion-card class="test post" post_id="${tutorials[i + originalLength]._id}" post_modules="${tutorials[i + originalLength].post_modules.join(', ')}" post_status="${tutorials[i + originalLength].post_status}">
                         <ion-item lines="full">
                             <ion-avatar slot="start">
-                                <img src="https://d00192082.alwaysdata.net/ServiceLoopServer/resources/images/base_user.png">
+                                <img src="${tutorials[i + originalLength].std_avatar}">
                             </ion-avatar>
                             <ion-label>
                                 <p style="font-size:1em; color: black;">${tutorials[i + originalLength].post_title}</p>
@@ -243,6 +275,14 @@ class Tutorials extends User {
         }
     }
 
+    /**
+     * This is a function that removes a tutorial card from the DOM along with 
+     * removing the tutorial from the array
+     * 
+     * @param {String} segment - This is the segment from which you wish to remove the tutorial from
+     * @param {Object} response - This is the object that contains the tutorial_id
+     * @param {Object} this_tutorial - This is the tutorial object to be removed from the array
+     */
     remove_tutorial_from_DOM(segment, response, this_tutorial) {
         let container;
         let total_tutorials;
@@ -251,36 +291,34 @@ class Tutorials extends User {
 
         if (segment == "Open") {
             container = document.getElementById('open');
+            total_tutorials = this.total_open_tutorials;
 
             if (container) {
-                total_tutorials = this.total_open_tutorials;
-
                 if (total_tutorials > 0) {
                     tutorial_id = response.updated_tutorial._id;
                     tutorial = container.querySelector('[post_id="' + tutorial_id + '"]');
 
                     if (total_tutorials == 1) {
-                        document.getElementById('open_tutorials_header').innerText = "NO PENDING TUTORIALS";
+                        document.getElementById('open_tutorials_header').innerText = "NO OPEN TUTORIALS";
                     }
 
                     this.total_open_tutorials--;
 
                     document.getElementById("open_badge").innerText = this.total_open_tutorials;
 
-                    this.open_tutorials = this.open_tutorials.filter(e => e !== this_tutorial);
+                    this.open_tutorials = this.open_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             } else {
                 if (total_tutorials > 0) {
                     this.total_open_tutorials--;
-                    this.open_tutorials = this.open_tutorials.filter(e => e !== this_tutorial);
+                    this.open_tutorials = this.open_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             }
         } else if (segment == "Pending") {
             container = document.getElementById('pending');
+            total_tutorials = this.total_pending_tutorials;
 
             if (container) {
-                total_tutorials = this.total_pending_tutorials;
-
                 if (total_tutorials > 0) {
                     tutorial_id = response.updated_tutorial._id;
                     tutorial = container.querySelector('[post_id="' + tutorial_id + '"]');
@@ -293,70 +331,71 @@ class Tutorials extends User {
 
                     document.getElementById("pending_badge").innerText = this.total_pending_tutorials;
 
-                    this.pending_tutorials = this.pending_tutorials.filter(e => e !== this_tutorial);
+                    this.pending_tutorials = this.pending_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             } else {
                 if (total_tutorials > 0) {
                     this.total_pending_tutorials--;
-                    this.pending_tutorials = this.pending_tutorials.filter(e => e !== this_tutorial);
+                    this.pending_tutorials = this.pending_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             }
         } else if (segment == "Ongoing") {
-            container = this.total_tutor_ongoing_tutorials;
-
+            container = document.getElementById('ongoing');
+            total_tutorials = this.total_ongoing_tutorials;
+            
             if (container) {
-                total_tutorials = container.querySelectorAll('.test').length;
-
                 if (total_tutorials > 0) {
                     tutorial_id = response.updated_tutorial._id;
                     tutorial = container.querySelector('[post_id="' + tutorial_id + '"]');
 
                     if (total_tutorials == 1) {
-                        document.getElementById('ongoing_tutor_tutorials_header').innerText = "NO ONGOING TUTORIALS";
+                        document.getElementById('ongoing_tutorials_header').innerText = "NO ONGOING TUTORIALS";
                     }
 
-                    this.total_tutor_ongoing_tutorials--;
+                    this.total_ongoing_tutorials--;
 
-                    document.getElementById("ongoing_tutorials_badge").innerText = this.total_tutor_ongoing_tutorials;
+                    document.getElementById("ongoing_badge").innerText = this.total_ongoing_tutorials;
 
-                    this.ongoing_tutor_tutorials = this.ongoing_tutor_tutorials.filter(e => e !== this_tutorial);
+                    this.ongoing_tutorials = this.ongoing_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             } else {
                 if (total_tutorials > 0) {
-                    this.total_tutor_ongoing_tutorials--;
-                    this.ongoing_tutor_tutorials = this.ongoing_tutor_tutorials.filter(e => e !== this_tutorial);
+                    this.total_ongoing_tutorials--;
+                    this.ongoing_tutorials = this.ongoing_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             }
         } else {
             container = document.getElementById('tutor_tutorials_done');
-
+            total_tutorials = this.total_done_tutorials;
+            
             if (container) {
-                total_tutorials = this.total_tutor_done_tutorials;
-
                 if (total_tutorials > 0) {
                     tutorial_id = response.updated_tutorial._id;
                     tutorial = container.querySelector('[post_id="' + tutorial_id + '"]');
 
                     if (total_tutorials == 1) {
-                        document.getElementById('done_tutor_tutorials_header').innerText = "NO DONE TUTORIALS";
+                        document.getElementById('don_tutorials_header').innerText = "NO DONE TUTORIALS";
                     }
 
-                    this.total_tutor_done_tutorials--;
+                    this.total_done_tutorials--;
 
-                    document.getElementById("done_tutorials_badge").innerText = this.total_tutor_done_tutorials;
+                    document.getElementById("done_badge").innerText = this.total_done_tutorials;
 
-                    this.done_tutor_tutorials = this.done_tutor_tutorials.filter(e => e !== this_tutorial);
+                    this.done_tutorials = this.done_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             } else {
                 if (total_tutorials > 0) {
-                    this.total_tutor_done_tutorials--;
-                    this.done_tutor_tutorials = this.done_tutor_tutorials.filter(e => e !== this_tutorial);
+                    this.total_done_tutorials--;
+                    this.done_tutorials = this.done_tutorials.filter(e => e._id !== this_tutorial._id);
                 }
             }
         }
 
         console.log(tutorial);
-        tutorial.parentNode.remove();
+        console.log(typeof tutorial)
+        if (typeof tutorial !== 'undefined' && tutorial !== null) {
+            tutorial.parentNode.remove();
+        }
     }
 
     update_my_tutorial(segment, updated_tutorial) {
@@ -383,6 +422,26 @@ class Tutorials extends User {
             }
 
             console.log(this.pending_tutorials);
+        } else if (segment === "Ongoing") {
+            console.log(this.ongoing_tutorials);
+
+            for (let i = 0; i < this.ongoing_tutorials.length; i++) {
+                if (this.ongoing_tutorials[i]._id === updated_tutorial._id) {
+                    this.ongoing_tutorials[i] = updated_tutorial;
+                }
+            }
+
+            console.log(this.ongoing_tutorials);
+        } else if (segment === "Done") {
+            console.log(this.done_tutorials);
+
+            for (let i = 0; i < this.done_tutorials.length; i++) {
+                if (this.done_tutorials[i]._id === updated_tutorial._id) {
+                    this.done_tutorials[i] = updated_tutorial;
+                }
+            }
+
+            console.log(this.done_tutorials);
         }
     }
 }

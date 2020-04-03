@@ -27,8 +27,7 @@ function apply_to_be_tutor(handler) {
           </ion-header>
           <ion-content>
               <ion-list class="fields" style="text-align:center;">
-            <p><strong>Apply to become a tutor here</strong></p>
-            <p>Please fill out this form to apply to become a tutor. A memeber of DKIT will then contact you regarding your application.</p>
+            <p>Please complete this form to apply to become a tutor. A member of DkIT will contact you via email.</p>
             
               </ion-list>
         <ion-list lines="full" class="ion-no-margin ion-no-padding fields">
@@ -44,15 +43,17 @@ function apply_to_be_tutor(handler) {
         </ion-item> 
     
         <ion-item>
-            <ion-label align="center">Modules offered <ion-text color="danger">*</ion-text></ion-label>
+            <ion-label align="center">Subject offered <ion-text color="danger">*</ion-text></ion-label>
                 <ion-select multiple="true" cancel-text="Cancel" ok-text="Add skills" id="tutor_modules">
-                  <ion-select-option value="HTML5">HTML5</ion-select-option>
-                  <ion-select-option value="CSS3">CSS3</ion-select-option>    
-                  <ion-select-option value="JavaScript">JavaScript</ion-select-option>
-                  <ion-select-option value="PHP">PHP</ion-select-option>
                   <ion-select-option value="Java">Java</ion-select-option>
-                  <ion-select-option value="C++">C++</ion-select-option>
-                  <ion-select-option value="Maths">Maths</ion-select-option>
+                            <ion-select-option value="ASP.NET">ASP.NET</ion-select-option>
+                            <ion-select-option value="CSS">CSS</ion-select-option>
+                            <ion-select-option value="Databases">Databases</ion-select-option>
+                            <ion-select-option value="HTML">HTML</ion-select-option>
+                            <ion-select-option value="Java">Java</ion-select-option>
+                            <ion-select-option value="JavaScript">JavaScript</ion-select-option>
+                            <ion-select-option value="Networking">Networking</ion-select-option>
+                            <ion-select-option value="Visual Basic">Visual Basic</ion-select-option>
                 </ion-select>
         </ion-item>
 
@@ -86,8 +87,12 @@ function apply_to_be_tutor(handler) {
 
                 if (!tutor_added_response.error) {
                     //We update the user so he becomes a tutor
-                    user.ascendToTutor(user_notifications, document.getElementById("tutor_modules").value, handler)
-                    user.setModules(document.getElementById("tutor_modules").value); 
+                    user.setStatus("Tutor");
+                    user.setModules(document.getElementById("tutor_modules").value);
+                    
+                    set_secure_storage("user_status", true);
+                    set_secure_storage("user_modules", document.getElementById("tutor_modules").value); 
+                    user.ascendToTutor(user_notifications, document.getElementById("tutor_modules").value, handler); 
                 } else {
                     tutor_apply_button.disabled = false;
                     create_ionic_alert("Tutor application failed", tutor_added_response.response, ["OK"]);

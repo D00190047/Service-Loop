@@ -1,10 +1,39 @@
 class User {
-    constructor(name = "", email = "", status = "", modules = ["none"], socket = "") {
+    constructor(id = "", name = "", email = "", status = "", modules = ["none"], avatar = "", open_tutorials = 0, pending_tutorials = 0, ongoing_tutorials = 0, done_tutorials = 0, tutored_pending_tutorials = 0, tutored_ongoing_tutorials = 0, tutored_done_tutorials = 0, tutor_rating = 0, socket = "") {
+        this.id = id;
         this.name = name;
         this.email = email;
         this.status = status;
         this.modules = modules;
+        this.avatar = avatar;
+        this.tutor_rating = tutor_rating;
+
+        this.open_tutorials = open_tutorials;
+        this.pending_tutorials = pending_tutorials;
+        this.ongoing_tutorials = ongoing_tutorials;
+        this.done_tutorials = done_tutorials;
+
+        this.tutored_pending_tutorials = tutored_pending_tutorials;
+        this.tutored_ongoing_tutorials = tutored_ongoing_tutorials;
+        this.tutored_done_tutorials = tutored_done_tutorials;
+
         this.socket = socket;
+    }
+
+    set_tutor_rating(tutor_rating) {
+        this.tutor_rating = tutor_rating;
+    }
+
+    get_tutor_rating() {
+        return this.tutor_rating;
+    }
+
+    setId(id) {
+        this.id = id;
+    }
+
+    getId() {
+        return this.id;
     }
 
     setName(name) {
@@ -39,6 +68,72 @@ class User {
         return this.modules;
     }
 
+    getAvatar() {
+        return this.avatar;
+    }
+
+    setAvatar(avatar) {
+        this.avatar = avatar;
+    }
+
+    //My tutorials
+    getOpenTutorials() {
+        return this.open_tutorials;
+    }
+
+    setOpenTutorials(open_tutorials) {
+        this.open_tutorials = open_tutorials;
+    }
+
+    getPendingTutorials() {
+        return this.pending_tutorials;
+    }
+
+    setPendingTutorials(pending_tutorials) {
+        this.pending_tutorials = pending_tutorials;
+    }
+
+    getOngoingTutorials() {
+        return this.ongoing_tutorials;
+    }
+
+    setOngoingTutorials(ongoing_tutorials) {
+        this.ongoing_tutorials = ongoing_tutorials;
+    }
+
+    getDoneTutorials() {
+        return this.done_tutorials;
+    }
+
+    setDoneTutorials(done_tutorials) {
+        this.done_tutorials = done_tutorials;
+    }
+
+    //My tutored tutorials
+    getPendingTutoredTutorials() {
+        return this.tutored_pending_tutorials;
+    }
+
+    setPendingTutoredTutorials(tutored_pending_tutorials) {
+        this.tutored_pending_tutorials = tutored_pending_tutorials;
+    }
+
+    getOngoingTutoredTutorials() {
+        return this.tutored_ongoing_tutorials;
+    }
+
+    setOngoingTutoredTutorials(tutored_ongoing_tutorials) {
+        this.tutored_ongoing_tutorials = tutored_ongoing_tutorials;
+    }
+
+    getDoneTutoredTutorials() {
+        return this.tutored_done_tutorials;
+    }
+
+    setDoneTutoredTutorials(tutored_done_tutorials) {
+        this.tutored_done_tutorials = tutored_done_tutorials;
+    }
+
     setSocket(socket) {
         this.socket = socket;
     }
@@ -47,10 +142,11 @@ class User {
         return this.socket;
     }
 
-    async check_session() {
+    async check_session(email) {
         try {
             let data = {
-                token: await get_secure_storage("jwt_session")
+                token: await get_secure_storage("jwt_session"),
+                email: email
             };
 
             const rawResponse = await fetch('http://serviceloopserver.ga/verify_token', {
@@ -64,13 +160,24 @@ class User {
 
             const content = await rawResponse.json();
 
-            if (content !== "Session valid") {
-                //alert("Session NOT valid")
+            if (content.session_response !== "Session valid") {
                 await remove_secure_storage("jwt_session");
                 window.location.href = "login.html";
                 return;
             } else {
-                //alert("Session valid.") 
+                this.id = content.user._id;
+                this.avatar = content.user.response.user_avatar;
+                this.tutor_rating = content.user.response.tutor_rating;
+
+                this.open_tutorials = content.tutorials_count.my_tutorials.open_count;
+                this.pending_tutorials = content.tutorials_count.my_tutorials.pending_count;
+                this.ongoing_tutorials = content.tutorials_count.my_tutorials.ongoing_count;
+                this.done_tutorials = content.tutorials_count.my_tutorials.done_count;
+
+                this.tutored_pending_tutorials = content.tutorials_count.my_tutored_tutorials.pending_count;
+                this.tutored_ongoing_tutorials = content.tutorials_count.my_tutored_tutorials.ongoing_count;
+                this.tutored_done_tutorials = content.tutorials_count.my_tutored_tutorials.done_count;
+
                 return "Proceed";
             }
 
@@ -81,16 +188,58 @@ class User {
         }
     }
 
+    async check_session_local(email) {
+        try {
+            let data = {
+                token: "dsfdf",
+                email: email
+            };
+
+            const rawResponse = await fetch('http://localhost:3001/localhost', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const content = await rawResponse.json();
+            this.id = content.user._id;
+            this.avatar = content.user.response.user_avatar;
+            this.tutor_rating = content.user.response.tutor_rating;
+
+            this.open_tutorials = content.tutorials_count.my_tutorials.open_count;
+            this.pending_tutorials = content.tutorials_count.my_tutorials.pending_count;
+            this.ongoing_tutorials = content.tutorials_count.my_tutorials.ongoing_count;
+            this.done_tutorials = content.tutorials_count.my_tutorials.done_count;
+
+            this.tutored_pending_tutorials = content.tutorials_count.my_tutored_tutorials.pending_count;
+            this.tutored_ongoing_tutorials = content.tutorials_count.my_tutored_tutorials.ongoing_count;
+            this.tutored_done_tutorials = content.tutorials_count.my_tutored_tutorials.done_count;
+
+        } catch (ex) {
+            console.log(ex);
+            return;
+        }
+    }
+
     createWebSocketConnection() {
         //HTTPS
         //const socket = io.connect("https://my.website.com:3002", { secure: true, reconnection: true, rejectUnauthorized: false });
         let modules = encodeURIComponent(JSON.stringify(this.modules));
-        let socket = io.connect('http://serviceloopserver.ga', {query: 'email=' + this.email + '&modules=' + modules});
-        //let socket = io.connect('http://localhost', {query: 'email=' + this.email + '&modules=' + modules});
+        let socket;
+        
+        if (!localhost) {
+            socket = io.connect('http://serviceloopserver.ga', {query: 'email=' + this.email + '&modules=' + modules});
+        } else {
+            socket = io.connect('http://localhost', {query: 'email=' + this.email + '&modules=' + modules});
+        }
+
         this.socket = socket;
 
         console.log(socket);
-    } 
+    }
 
     async ascendToTutor(user_notifications, user_modules, handler) {
         //We update the users modules, status and socket as he is now a tutor
@@ -145,6 +294,7 @@ class User {
 
         let my_tutorials = document.createElement('ion-list');
         my_tutorials.classList.add("home_buttons", "ion-activatable", "ripple", "md", "list-md", "hydrated");
+        my_tutorials.id = "my_tutorials";
         my_tutorials.innerHTML = `
                                     <h6>My tutorials</h6>
                                     <p>View all tutorials that are tutored by you</p>
@@ -165,6 +315,11 @@ class User {
         //Load the forum script
         include("js/modules/index/forum_module.js", "forum_script");
 
+        my_tutorials.addEventListener("click", async function () {
+            device_feedback();
+            await include("js/modules/index/my_tutorials_module.js", "my_requested_tutorials_script");
+            load_my_requested_tutorials();
+        });
         tutor_application_button.addEventListener("click", function () {
             all_tutorials(nav);
         });
